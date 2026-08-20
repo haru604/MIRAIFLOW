@@ -1,4 +1,4 @@
-const CACHE='miraiflow-v3.6.2-beta';
+const CACHE='miraiflow-v3.6.3-beta';
 const SHELL=['./manifest.json','./icon.svg','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{
   self.skipWaiting();

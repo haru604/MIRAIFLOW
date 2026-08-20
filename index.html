@@ -25,7 +25,7 @@ body{padding-bottom:92px} button,input,select,textarea{font:inherit}.app{max-wid
 </head>
 <body>
 <div class="app">
-  <div class="topbar"><div class="brand"><img src="icon-192.png"><div><h1>MIRAIFLOW</h1><div class="sub" id="periodText">未来のお金を、見えるように。</div><div class="tiny" style="margin-top:2px">Build v3.6.2-beta</div></div></div><div style="display:flex;align-items:center;gap:7px"><span id="modeBadge" class="modeBadge beta">BETA</span><button class="menuBtn" id="homeMenuBtn" aria-label="メニュー">☰</button></div></div>
+  <div class="topbar"><div class="brand"><img src="icon-192.png"><div><h1>MIRAIFLOW</h1><div class="sub" id="periodText">未来のお金を、見えるように。</div><div class="tiny" style="margin-top:2px">Build v3.6.4-beta</div></div></div><div style="display:flex;align-items:center;gap:7px"><span id="modeBadge" class="modeBadge beta">BETA</span><button class="menuBtn" id="homeMenuBtn" aria-label="メニュー">☰</button></div></div>
 
   <section id="home" class="screen active"></section>
   <section id="calendar" class="screen"></section>
@@ -288,7 +288,6 @@ function restore(){const inp=document.createElement('input');inp.type='file';inp
 function showHistory(){modal(`<h3>変更履歴</h3><div class="list">${S.history.length?S.history.slice(0,60).map(h=>`<div class="listItem"><div><b>${h.action}</b><div class="meta">${new Date(h.date).toLocaleString('ja-JP')} ・ ${h.detail}</div></div></div>`).join(''):'<div class="empty">履歴はありません</div>'}</div>`)}
 function updateBalance(){modal(`<h3>口座内の全財産を更新</h3><div class="notice">銀行アプリなどで確認した「現在の実際の口座残高」を入力します。給料や支出をここで足し引きする必要はありません。</div><div class="formGroup"><label>現在の全財産</label><input class="input" id="bal" type="number" value="${S.totalAssets}"></div><div class="tiny">カード引落・固定費の実績と照合するための実残高です。</div><div class="actions" style="margin-top:12px"><button class="btn primary" onclick="doBalance()">更新</button></div>`)}
 function doBalance(){const old=S.totalAssets,nv=Number(bal.value)||0;S.totalAssets=nv;S.balanceChecks.unshift({date:new Date().toISOString(),old,new:nv,diff:nv-old});addHistory('全財産更新',`${yen(old)}→${yen(nv)}`);closeModal();save('全財産を更新しました')}
-document.querySelector('#quickBalance').onclick=updateBalance;
 async function resizeReceipt(dataUrl,maxSide=1800,quality=.84){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const scale=Math.min(1,maxSide/Math.max(w,h));w=Math.round(w*scale);h=Math.round(h*scale);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);resolve(c.toDataURL('image/jpeg',quality))};img.onerror=reject;img.src=dataUrl})}
 function receiptManualModal(dataUrl,message='Gemini AI未接続のため確認入力します。'){modal(`<h3>レシート登録</h3><img class="receiptPreview" src="${dataUrl}"><div class="notice" style="margin-top:10px">${message}</div><div class="formGroup" style="margin-top:12px"><label>購入日</label><input id="rDate" class="input" type="date" value="${todayISO()}"></div><div class="formGroup"><label>合計金額</label><input id="rAmt" class="input" type="number"></div><div class="formGroup"><label>主カテゴリ</label><select id="rCat" class="input">${Object.entries(S.categories).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div><div class="formGroup"><label>店舗名</label><input id="rShop" class="input"></div><div class="actions"><button class="btn primary" onclick="saveReceiptManual()">確認して登録</button><button class="btn ghost" onclick="cancelReceipt()">破棄して閉じる</button></div><div class="tiny" style="margin-top:8px">登録後、写真データは自動破棄されます。</div>`);window.__receiptData=dataUrl}
 async function receiptPicked(file){if(!file)return;const r=new FileReader();r.onload=async()=>{let dataUrl=r.result;try{dataUrl=await resizeReceipt(dataUrl)}catch(e){}window.__receiptData=dataUrl;const api=(S.settings.receiptApiUrl||'').trim();if(!api){receiptManualModal(dataUrl);return}modal(`<h3>レシートAI解析</h3><img class="receiptPreview" src="${dataUrl}"><div class="notice" style="margin-top:10px"><span class="spinner"></span>Geminiが店舗・商品・金額を読み取っています…</div>`);try{const result=await analyzeReceipt(dataUrl);showReceiptReview(result,dataUrl)}catch(e){console.error(e);receiptManualModal(dataUrl,`AI解析に失敗しました。手入力へ切り替えます。<br><span class="tiny">${escapeHtml(e.message||'通信エラー')}</span>`)}};r.readAsDataURL(file)}
@@ -344,7 +343,7 @@ function derivedCardBills(){
 function fixedDueItems(month=S.currentMonth){return Object.entries(S.fixedConfig).flatMap(([key,c])=>{const date=dateWithDay(month,Number(c.day)||0);if(!date)return[];const id=`${month}|${key}`;const paid=S.fixedPayments.find(x=>x.id===id);return[{id,key,title:FIXED_META[key],date,amount:Number(S.budgets[key])||0,paymentMethod:c.paymentMethod||'bank',paid:!!paid,actualAmount:paid?.amount??null}]})}
 function cashflowForDate(date){
  const arr=[];
- derivedCardBills().filter(b=>b.date===date).forEach(b=>arr.push({type:b.paid?'inc':'exp',subtype:'cardBill',id:b.key,title:`${paymentLabel(b.card)}引落${b.paid?'済':''}`,amount:b.paid?b.actualAmount:b.amount,paid:b.paid}));
+ derivedCardBills().filter(b=>b.date===date).forEach(b=>arr.push({type:b.paid?'inc':'exp',subtype:'cardBill',id:b.key,card:b.card,title:`${paymentLabel(b.card)}引落${b.paid?'済':''}`,amount:b.paid?b.actualAmount:b.amount,paid:b.paid}));
  fixedDueItems(date.slice(0,7)).filter(x=>x.date===date).forEach(f=>arr.push({type:f.paid?'inc':'exp',subtype:'fixed',id:f.id,title:`${f.title}${f.paid?' 支払済':''}`,amount:f.paid?f.actualAmount:f.amount,paid:f.paid}));
  return arr;
 }
@@ -525,7 +524,7 @@ function derivedCardBills(){
  months.forEach(month=>Object.entries(S.fixedConfig||{}).forEach(([key,c])=>{if(!isCardMethod(c.paymentMethod))return;const date=cardScheduledDebitDate(c.paymentMethod,month);const k=cardBillKey(c.paymentMethod,date);const pid=`${month}|${key}`,paid=S.fixedPayments.find(x=>x.id===pid),amt=Number(paid?.amount??S.budgets[key])||0;if(!amt)return;map[k]??={key:k,card:c.paymentMethod,date,amount:0,source:'fixed'};map[k].amount+=amt;map[k].source=map[k].source==='usage'||map[k].source==='opening'?'mixed':'fixed'}));
  return Object.values(map).map(b=>{const st=S.cardSettlements[b.key]||{};return {...b,paid:!!st.paid,actualAmount:st.actualAmount??b.amount,paidAt:st.paidAt||null}}).sort((a,b)=>a.date.localeCompare(b.date));
 }
-function cashflowForDate(date){const arr=[];derivedCardBills().filter(b=>b.date===date).forEach(b=>arr.push({type:b.paid?'inc':'exp',subtype:'cardBill',id:b.key,title:`${paymentLabel(b.card)}引落${b.paid?'済':''}`,amount:b.paid?b.actualAmount:b.amount,paid:b.paid}));fixedDueItems(date.slice(0,7)).filter(x=>x.date===date&&!isCardMethod(x.paymentMethod)).forEach(f=>arr.push({type:f.paid?'inc':'exp',subtype:'fixed',id:f.id,title:`${f.title}${f.paid?' 支払済':''}`,amount:f.paid?f.actualAmount:f.amount,paid:f.paid}));return arr}
+function cashflowForDate(date){const arr=[];derivedCardBills().filter(b=>b.date===date).forEach(b=>arr.push({type:b.paid?'inc':'exp',subtype:'cardBill',id:b.key,card:b.card,title:`${paymentLabel(b.card)}引落${b.paid?'済':''}`,amount:b.paid?b.actualAmount:b.amount,paid:b.paid}));fixedDueItems(date.slice(0,7)).filter(x=>x.date===date&&!isCardMethod(x.paymentMethod)).forEach(f=>arr.push({type:f.paid?'inc':'exp',subtype:'fixed',id:f.id,title:`${f.title}${f.paid?' 支払済':''}`,amount:f.paid?f.actualAmount:f.amount,paid:f.paid}));return arr}
 function upcomingCashflow(limit=3){const today=todayISO(),cards=derivedCardBills().filter(x=>x.date>=today&&!x.paid).map(x=>({...x,title:`${paymentLabel(x.card)}引落`,type:'exp'})),fixed=[];for(let i=0;i<2;i++){const d=new Date(S.currentMonth+'-01T00:00:00');d.setMonth(d.getMonth()+i);const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;fixed.push(...fixedDueItems(m).filter(x=>x.date>=today&&!x.paid&&!isCardMethod(x.paymentMethod)).map(x=>({...x,title:x.title,type:'exp'})))}return[...cards,...fixed].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,limit)}
 
 // 買い物は購入日を「今日/カレンダーで選んだ日」に自動設定。カードの引落日は完全自動。
@@ -576,16 +575,41 @@ function switchBetaToProduction(reason='auto'){
  const keep={budgets:deep(S.budgets||DEFAULT.budgets),categories:deep(S.categories||DEFAULT.categories),settings:deep(S.settings||DEFAULT.settings),fixedConfig:deep(S.fixedConfig||{}),cardOpeningBills:deep(S.cardOpeningBills||[]),salary:Number(S.salary)||200000,funds:(S.funds||DEFAULT.funds).map(f=>({...deep(f),balance:0})),events:(S.events||[]).filter(e=>e?.preserveOnLaunch===true||e?.id==='oil'||e?.id==='hospitalNext').map(e=>({...deep(e),completed:false}))};
  S.started=false;S.totalAssets=0;S.defense=0;S.investment=0;S.currentMonth='2026-09';S.salary=keep.salary;S.budgets=keep.budgets;S.categories=keep.categories;S.settings=keep.settings;S.fixedConfig=keep.fixedConfig;S.cardOpeningBills=keep.cardOpeningBills;S.funds=keep.funds;S.events=keep.events;
  S.transactions=[];S.receipts=[];S.suggestions=[];S.history=[];S.monthClosures={};S.balanceChecks=[];S.balanceAnalysis=[];S.cardSettlements={};S.fixedPayments=[];S.fundContribs={};S.cardReconciliations=[];
- S.beta={mode:'production',productionStart:MF_PRODUCTION_START,startedAt:new Date().toISOString(),switchReason:reason,showLaunchNotice:true,preserveOpeningBills:true,preserveSettings:true};S.version=3.62;
+ S.beta={mode:'production',productionStart:MF_PRODUCTION_START,startedAt:new Date().toISOString(),switchReason:reason,showLaunchNotice:true,preserveOpeningBills:true,preserveSettings:true};S.version=3.63;
  localStorage.setItem('miraiflow',JSON.stringify(S));calDate=new Date('2026-09-01T00:00:00');try{renderAll()}catch(e){}return true
 }
 function checkProductionCutover(){ensureBetaState();if(S.beta.mode!=='production'&&Date.now()>=Date.parse(MF_PRODUCTION_START)){const changed=switchBetaToProduction('date');if(changed)setTimeout(firstRun,80);return changed}return false}
 function scheduleProductionCutover(){ensureBetaState();if(checkProductionCutover())return;const ms=Date.parse(MF_PRODUCTION_START)-Date.now();if(ms>0)setTimeout(()=>checkProductionCutover(),Math.min(ms+50,2147483000));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkProductionCutover()});window.addEventListener('focus',checkProductionCutover)}
-function upgradeV353(){ensureBetaState();S.version=3.62;localStorage.setItem('miraiflow',JSON.stringify(S))}
+function upgradeV353(){ensureBetaState();S.version=3.63;localStorage.setItem('miraiflow',JSON.stringify(S))}
 
-function upgradeV352(){S.version=3.62;Object.entries(S.fixedConfig||{}).forEach(([k,c])=>{if(isCardMethod(c.paymentMethod))c.day=null});localStorage.setItem('miraiflow',JSON.stringify(S))}
+function upgradeV352(){S.version=3.63;Object.entries(S.fixedConfig||{}).forEach(([k,c])=>{if(isCardMethod(c.paymentMethod))c.day=null});localStorage.setItem('miraiflow',JSON.stringify(S))}
 
-window.addEventListener('load',async()=>{purgeLegacyReceiptImages();clearReceiptTemp();upgradeV34();upgradeV35();upgradeV352();upgradeV353();checkProductionCutover();renderAll();initBackNavigation();scheduleProductionCutover();setTimeout(firstRun,180);if('serviceWorker' in navigator){try{const reg=await navigator.serviceWorker.register('./sw.js?v=362',{updateViaCache:'none'});await reg.update();let reloading=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});}catch(e){console.warn('SW update failed',e)}}});
+window.addEventListener('load',async()=>{
+ try{
+  purgeLegacyReceiptImages();
+  clearReceiptTemp();
+  upgradeV34();upgradeV35();upgradeV352();upgradeV353();
+  ensureV36State();
+  checkProductionCutover();
+  localStorage.setItem('miraiflow',JSON.stringify(S));
+  renderAll();
+  document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
+  updateHomeMenuVisibility();
+  initBackNavigation();
+  scheduleProductionCutover();
+  setTimeout(firstRun,180);
+  if('serviceWorker' in navigator){
+   try{
+    const reg=await navigator.serviceWorker.register('./sw.js?v=364',{updateViaCache:'none'});
+    await reg.update();
+   }catch(e){console.warn('SW update failed',e)}
+  }
+ }catch(e){
+  console.error('[MIRAIFLOW boot]',e);
+  const h=document.querySelector('#home');
+  if(h) h.innerHTML=`<div class="card"><h2>起動エラーを検出</h2><div class="notice">データは削除していません。</div><div class="tiny" style="margin-top:8px">${escapeHtml(e?.message||String(e))}</div></div>`;
+ }
+});
 
 
 // ===== v3.6 beta UX consolidation =====
@@ -594,7 +618,7 @@ function ensureV36State(){
  S.personalWallet.monthlyAdd=10000;S.personalWallet.cap=20000;
  if(!Number.isFinite(Number(S.personalWallet.available)))S.personalWallet.available=10000;
  S.resultMonth=S.resultMonth||S.currentMonth;
- S.version=3.62;
+ S.version=3.63;
 }
 function personalBudgetAvailable(m=S.currentMonth){if(m===S.currentMonth)return Math.max(0,Number(S.personalWallet?.available)||10000);return Number(S.budgets.personal)||10000}
 function categoryBudgetFor(k,m=S.currentMonth){return k==='personal'?personalBudgetAvailable(m):Number(S.budgets[k])||0}
@@ -686,8 +710,6 @@ renderAll=function(){
 window.addEventListener('error',e=>console.error('[MIRAIFLOW runtime]',e.error||e.message));
 
 // v3.6.1 boot migration + UI wiring
-window.addEventListener('load',()=>{try{ensureV36State();localStorage.setItem('miraiflow',JSON.stringify(S));renderAll();document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));updateHomeMenuVisibility()}catch(e){console.error('[MIRAIFLOW boot]',e);const h=document.querySelector('#home');if(h)h.innerHTML=`<div class="card"><h2>起動エラーを検出</h2><div class="notice">データは削除していません。設定・記録を保持したまま復旧できます。</div><div class="tiny" style="margin-top:8px">${escapeHtml(e?.message||String(e))}</div></div>`}});
-
 </script>
 </body>
 </html>
