@@ -1,0 +1,24 @@
+{
+  "name": "MIRAIFLOW",
+  "short_name": "MIRAIFLOW",
+  "description": "今日のお金から、未来のお金まで。",
+  "start_url": "./?v=362",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#081426",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "scope": "./"
+}
